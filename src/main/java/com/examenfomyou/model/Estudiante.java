@@ -1,0 +1,23 @@
+package com.examenfomyou.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.io.Serializable;
+
+@Builder
+@AllArgsConstructor
+@Data
+@NoArgsConstructor
+@Entity
+public class Estudiante implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long idEstudiante;
+    private String nombre;
+    private int edad;
+    private String ciudad;
+    private String zonaHoraria;
+}
