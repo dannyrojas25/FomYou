@@ -1,9 +1,13 @@
 package com.examenfomyou.controller;
 
+import com.examenfomyou.dto.PreguntaRespuestasDTO;
 import com.examenfomyou.model.Examen;
 import com.examenfomyou.service.ExamenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/examenes")
 public class ExamenController {
@@ -20,8 +24,13 @@ public class ExamenController {
     }
 
     @GetMapping("/realizar-examen/{idEstudiante}")
-    public ResponseEntity<String> realizarExamen(@PathVariable Long idEstudiante){
-        examenService.realizarExamen(idEstudiante);
-        return ResponseEntity.ok("Examen realizado satisfactoriamente");
+    public List<PreguntaRespuestasDTO> realizarExamen(@PathVariable Long idEstudiante){
+        List<PreguntaRespuestasDTO> examen = examenService.realizarExamen(idEstudiante);
+        return examen;
+    }
+
+    @PostMapping("/solucionar-examen/{idEstudiante}")
+    public void responderExamen(@PathVariable Long idEstudiante){
+        examenService.responderExamen(idEstudiante);
     }
 }

@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface RespuestaRepository extends JpaRepository<Respuesta, Long> {
-    @Query(value = "SELECT id_respuesta, opcion, respuesta, id_pregunta FROM Respuesta WHERE id_pregunta IN (:idsPreguntas)", nativeQuery = true)
+    @Query(value = "SELECT id_respuesta, opcion, opc_respuesta, id_pregunta FROM Respuesta WHERE id_pregunta IN (:idsPreguntas)", nativeQuery = true)
     List<Object[]> findRespuestasByPreguntaIds(@Param("idsPreguntas") List<Object> idsPreguntas);
 }

@@ -1,5 +1,7 @@
 package com.examenfomyou.service;
 
+import com.examenfomyou.dto.PreguntaRespuestasDTO;
+import com.examenfomyou.dto.RespuestaDTO;
 import com.examenfomyou.model.*;
 import com.examenfomyou.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,9 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ExamenService {
@@ -37,32 +38,67 @@ public class ExamenService {
         }
     }
 
-    public ResponseEntity<String> realizarExamen(Long idEstudiante){
-        Optional<Estudiante> estudiante = estudianteRepository.findById(idEstudiante);
+    public List<PreguntaRespuestasDTO> realizarExamen(Long idEstudiante){
         Asignacion asignacion = asignacionRepository.findByEstudianteId(idEstudiante);
+        if (asignacion == null) {
+            return Collections.emptyList();
+        }
         List<Object[]> preguntas = preguntaRepository.findByExamenId(asignacion.getIdExamen());
-        List<Object> idsPreguntas = new ArrayList<>();
-        for (Object[] pregunta : preguntas) {
-            if (pregunta != null && pregunta.length > 0) {
-                idsPreguntas.add(pregunta[0]);
-            }
+        if (preguntas.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Object> idsPreguntas = preguntas.stream()
+                .filter(pregunta -> pregunta != null && pregunta.length > 0)
+                .map(pregunta -> pregunta[0])
+                .collect(Collectors.toList());
+        if (idsPreguntas.isEmpty()) {
+            return Collections.emptyList();
         }
         List<Object[]> respuestas = respuestaRepository.findRespuestasByPreguntaIds(idsPreguntas);
 
-       /* comprobarAsignacionExamen(estudiante.get().getId_estudiante());
-        try {
-            Optional estudiante = estudianteRepository.findById(idEstudiante);
-            if(!estudiante.isEmpty()){
-                comprarAsignacionExamen(estudiante);
-            }
-            examenRepository.save();
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al realizar el examen.");
-        }*/
-        return ResponseEntity.ok("Todo bien");
+        return construirJsonExamen(preguntas, respuestas);
     }
-/*
-    private void comprobarAsignacionExamen(long idEstudiante){
-        Asignacion asignacion = asignacionRepository.findByEstudianteId(1L);
-    }*/
+
+    public List<PreguntaRespuestasDTO> construirJsonExamen(List<Object[]> preguntas, List<Object[]> respuestas) {
+        Map<Long, PreguntaRespuestasDTO> mapaPreguntas = new HashMap<>();
+
+        preguntas.forEach(preguntaArray -> {
+            if (preguntaArray != null && preguntaArray.length >= 2) {
+                Long idPregunta = (Long) preguntaArray[0];
+                String enunciado = (String) preguntaArray[1];
+
+                PreguntaRespuestasDTO preguntaDTO = new PreguntaRespuestasDTO();
+                preguntaDTO.setIdPregunta(idPregunta);
+                preguntaDTO.setEnunciado(enunciado);
+                preguntaDTO.setRespuestas(new ArrayList<>());
+
+                mapaPreguntas.put(idPregunta, preguntaDTO);
+            }
+        });
+
+        respuestas.forEach(respuestaArray -> {
+            if (respuestaArray != null && respuestaArray.length >= 4) {
+                Long idPregunta = (Long) respuestaArray[3];
+                Long idRespuesta = (Long) respuestaArray[0];
+                String opcion = (String) respuestaArray[1];
+                String textoRespuesta = (String) respuestaArray[2];
+
+                RespuestaDTO respuestaDTO = new RespuestaDTO();
+                respuestaDTO.setIdRespuesta(idRespuesta);
+                respuestaDTO.setOpcion(opcion);
+                respuestaDTO.setRespuesta(textoRespuesta);
+
+                PreguntaRespuestasDTO preguntaDTO = mapaPreguntas.get(idPregunta);
+                if (preguntaDTO != null) {
+                    preguntaDTO.getRespuestas().add(respuestaDTO);
+                }
+            }
+        });
+
+        return new ArrayList<>(mapaPreguntas.values());
+    }
+
+    public void responderExamen(Long idEstudiante){
+
+    }
 }

@@ -11,6 +11,5 @@ import java.util.List;
 @NoArgsConstructor
 public class ExamenDTO {
     private String descripcion;
-
     private Date fecha;
 }
