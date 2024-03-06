@@ -1,6 +1,5 @@
 package com.examenfomyou.model;
 
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

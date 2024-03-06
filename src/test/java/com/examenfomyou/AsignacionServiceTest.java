@@ -25,7 +25,7 @@ public class AsignacionServiceTest {
         Asignacion asignacion = Asignacion.builder()
                 .idEstudiante(1L)
                 .idExamen(1L)
-                .nota(0)
+                .calificacion("0")
                 .realizado(false)
                 .build();
 
@@ -42,7 +42,7 @@ public class AsignacionServiceTest {
         Asignacion asignacion = Asignacion.builder()
                 .idEstudiante(3L)
                 .idExamen(2L)
-                .nota(0)
+                .calificacion("0")
                 .realizado(false)
                 .build();
         doThrow(new RuntimeException("Error simulado")).when(asignacionRepositoryMock).save(asignacion);

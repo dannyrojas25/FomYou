@@ -16,7 +16,6 @@ public class EstudianteController {
 
     @PostMapping("/crear")
     public ResponseEntity<String> crearEstudiante(@RequestBody Estudiante estudiante){
-        estudianteService.crearEstudiante(estudiante);
-        return ResponseEntity.ok("Estudiante guardado exitosamente.");
+        return estudianteService.crearEstudiante(estudiante);
     }
 }

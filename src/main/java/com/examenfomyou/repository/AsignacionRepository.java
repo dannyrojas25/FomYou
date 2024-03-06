@@ -13,6 +13,6 @@ public interface AsignacionRepository extends JpaRepository<Asignacion, Long> {
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE Asignacion SET calificacion = :calificacionTotal WHERE id_examen = :idExamen", nativeQuery = true)
-    void actualizarCalificacionExamen(@Param("calificacionTotal") int calificacionTotal, @Param("idExamen") Long idExamen);
+    @Query(value = "UPDATE Asignacion SET calificacion = :calificacionTotal, realizado = :realizado WHERE id_examen = :idExamen", nativeQuery = true)
+    void actualizarCalificacionExamen(@Param("calificacionTotal") int calificacionTotal, @Param("realizado") boolean realizado, @Param("idExamen") Long idExamen);
 }

@@ -24,6 +24,4 @@ public class RespuestasExamen {
     private String opcMarcada;
 
     private int calificacion;
-
-    private String respuestaExamen;
 }

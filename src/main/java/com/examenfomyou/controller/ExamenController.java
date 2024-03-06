@@ -20,19 +20,16 @@ public class ExamenController {
 
     @PostMapping("/crear")
     public ResponseEntity<String> crearExamen(@RequestBody Examen examen){
-        examenService.crearExamen(examen);
-        return ResponseEntity.ok("Examen creado con exito.");
+        return examenService.crearExamen(examen);
     }
 
     @GetMapping("/realizar-examen/{idEstudiante}")
     public ResponseEntity<String> realizarExamen(@PathVariable Long idEstudiante) throws JsonProcessingException {
-        examenService.realizarExamen(idEstudiante);
-        return ResponseEntity.ok("Examen realizado con exito.");
+        return examenService.realizarExamen(idEstudiante);
     }
     @PostMapping("/solucionar-examen/{idExamen}")
     public ResponseEntity<String> solucionarExamen(@RequestBody List<RespuestasExamen> respuestasExamen, @PathVariable Long idExamen){
-        examenService.solucionarExamen(respuestasExamen, idExamen);
-        return ResponseEntity.ok("Examen resuelto y calificado con exito..");
+        return examenService.solucionarExamen(respuestasExamen, idExamen);
     }
 
 }

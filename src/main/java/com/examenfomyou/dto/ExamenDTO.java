@@ -1,10 +1,8 @@
 package com.examenfomyou.dto;
 
-import com.examenfomyou.model.Pregunta;
 import lombok.*;
 
 import java.util.Date;
-import java.util.List;
 
 @Data
 @AllArgsConstructor

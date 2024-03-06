@@ -9,14 +9,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/asignacion")
 public class AsignacionController {
     private final AsignacionService asignacionService;
-
     public AsignacionController(AsignacionService asignacionService) {
         this.asignacionService = asignacionService;
     }
 
     @PostMapping("/crear")
     public ResponseEntity<String> crearAsignacion(@RequestBody Asignacion asignacion){
-        asignacionService.crearAsignacion(asignacion);
-        return ResponseEntity.ok("El examen fue asignado exitosamente.");
+        return asignacionService.crearAsignacion(asignacion);
     }
 }

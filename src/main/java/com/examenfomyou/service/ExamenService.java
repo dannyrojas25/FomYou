@@ -7,17 +7,12 @@ import com.examenfomyou.model.RespuestasExamen;
 import com.examenfomyou.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.hibernate.boot.model.source.internal.hbm.ModelBinder.prepare;
 
 @Service
 public class ExamenService {
@@ -30,7 +25,8 @@ public class ExamenService {
     private static final String MENSAJE = "Examen creado exitosamente";
 
     @Autowired
-    public ExamenService(ExamenRepository examenRepository, EstudianteRepository estudianteRepository, AsignacionRepository asignacionRepository, PreguntaRepository preguntaRepository, RespuestaRepository respuestaRepository, RespuestasExamen respuestasExamen, RespuestasExamenRepository respuestasExamenRepository, ObjectMapper objectMapper) {
+    public ExamenService(ExamenRepository examenRepository, AsignacionRepository asignacionRepository, PreguntaRepository preguntaRepository,
+                         RespuestaRepository respuestaRepository, RespuestasExamenRepository respuestasExamenRepository, ObjectMapper objectMapper) {
         this.examenRepository = examenRepository;
         this.asignacionRepository = asignacionRepository;
         this.preguntaRepository = preguntaRepository;
@@ -53,63 +49,74 @@ public class ExamenService {
         Optional<Examen> examen = examenRepository.findById(asignacion.getIdExamen());
         List<PreguntaRespuestasDTO> examenPresentar;
         List<Object[]> preguntas = preguntaRepository.findByExamenId(asignacion.getIdExamen());
-        if (preguntas.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Lista de preguntas vacía.");
-        }
+
         List<Object> idsPreguntas = preguntas.stream()
                 .filter(pregunta -> pregunta != null && pregunta.length > 0)
                 .map(pregunta -> pregunta[0])
-                .collect(Collectors.toList());
+                .toList();
+
         if (idsPreguntas.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Lista de los id's de las preguntas está vacía.");
+            return ResponseEntity.noContent().build();
         }
+
         List<Object[]> respuestas = respuestaRepository.findRespuestasByPreguntaIds(idsPreguntas);
         examenPresentar = construirJsonExamen(preguntas, respuestas);
 
-        try {
-            String examenPresentarJson = objectMapper.writeValueAsString(examenPresentar);
-            examenRepository.guardarExamen(examenPresentarJson, examen.get().getIdExamen());
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body("Error al convertir el objeto a JSON: " + e.getMessage());
+        if (examen.isPresent()) {
+            Examen examenOpcional = examen.get();
+            try {
+                String examenPresentarJson = objectMapper.writeValueAsString(examenPresentar);
+                examenRepository.guardarExamen(examenPresentarJson, examenOpcional.getIdExamen());
+                return ResponseEntity.ok("Examen creado exitosamente.");
+            } catch (JsonProcessingException e) {
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body("Error al convertir el objeto a JSON: " + e.getMessage());
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el examen correspondiente a la asignación.");
         }
-        return ResponseEntity.ok("Examen creado exitosamente.");
     }
 
     public List<PreguntaRespuestasDTO> construirJsonExamen(List<Object[]> preguntas, List<Object[]> respuestas) {
         Map<Long, PreguntaRespuestasDTO> mapaPreguntas = new HashMap<>();
 
-        preguntas.forEach(preguntaArray -> {
-            if (preguntaArray != null && preguntaArray.length >= 2) {
-                Long idPregunta = (Long) preguntaArray[0];
-                String enunciado = (String) preguntaArray[1];
+        if (preguntas != null && !preguntas.isEmpty()) {
+            for (int i = 0; i < preguntas.size(); i++) {
+                Object[] preguntaArray = preguntas.get(i);
+                if (preguntaArray != null && preguntaArray.length >= 2) {
+                    Long idPregunta = (Long) preguntaArray[0];
+                    String enunciado = (String) preguntaArray[1];
 
-                PreguntaRespuestasDTO preguntaDTO = new PreguntaRespuestasDTO();
-                preguntaDTO.setIdPregunta(idPregunta);
-                preguntaDTO.setEnunciado(enunciado);
-                preguntaDTO.setRespuestas(new ArrayList<>());
+                    PreguntaRespuestasDTO preguntaDTO = new PreguntaRespuestasDTO();
+                    preguntaDTO.setIdPregunta(idPregunta);
+                    preguntaDTO.setEnunciado(enunciado);
+                    preguntaDTO.setRespuestas(new ArrayList<>());
 
-                mapaPreguntas.put(idPregunta, preguntaDTO);
-            }
-        });
-
-        respuestas.forEach(respuestaArray -> {
-            if (respuestaArray != null && respuestaArray.length >= 4) {
-                Long idPregunta = (Long) respuestaArray[3];
-                Long idRespuesta = (Long) respuestaArray[0];
-                String opcion = (String) respuestaArray[1];
-                String textoRespuesta = (String) respuestaArray[2];
-
-                RespuestaDTO respuestaDTO = new RespuestaDTO();
-                respuestaDTO.setIdRespuesta(idRespuesta);
-                respuestaDTO.setOpcion(opcion);
-                respuestaDTO.setOpcRespuesta(textoRespuesta);
-
-                PreguntaRespuestasDTO preguntaDTO = mapaPreguntas.get(idPregunta);
-                if (preguntaDTO != null) {
-                    preguntaDTO.getRespuestas().add(respuestaDTO);
+                    mapaPreguntas.put(idPregunta, preguntaDTO);
                 }
             }
-        });
+        }
+
+        if (respuestas != null && !respuestas.isEmpty()) {
+            for (int i = 0; i < respuestas.size(); i++) {
+                Object[] respuestaArray = respuestas.get(i);
+                if (respuestaArray != null && respuestaArray.length >= 4) {
+                    Long idPregunta = (Long) respuestaArray[3];
+                    Long idRespuesta = (Long) respuestaArray[0];
+                    String opcion = (String) respuestaArray[1];
+                    String textoRespuesta = (String) respuestaArray[2];
+
+                    RespuestaDTO respuestaDTO = new RespuestaDTO();
+                    respuestaDTO.setIdRespuesta(idRespuesta);
+                    respuestaDTO.setOpcion(opcion);
+                    respuestaDTO.setOpcRespuesta(textoRespuesta);
+
+                    PreguntaRespuestasDTO preguntaDTO = mapaPreguntas.get(idPregunta);
+                    if (preguntaDTO != null) {
+                        preguntaDTO.getRespuestas().add(respuestaDTO);
+                    }
+                }
+            }
+        }
 
         return new ArrayList<>(mapaPreguntas.values());
     }
@@ -117,17 +124,27 @@ public class ExamenService {
     public ResponseEntity<String> solucionarExamen(List<RespuestasExamen> listadoRespuestas, Long idExamen){
         List<RespuestasExamen> respuestasAGuardar = new ArrayList<>();
         boolean esCorrecta = true;
+        boolean realizado = false;
         int indice = 0;
         int calificacionTotal = 0;
+
+        Asignacion verificarDisposicionExamen = asignacionRepository.findByEstudianteId(listadoRespuestas.get(0).getIdEstudiante());
+
+        if(verificarDisposicionExamen.isRealizado()){
+            return ResponseEntity.ok("Ya realizaste el examen, tu calificación fue de " + verificarDisposicionExamen.getCalificacion() + " puntos de 100 disponibles");
+        }
+
         List<Long> listaIdsPreguntas = listadoRespuestas.stream()
                 .map(RespuestasExamen::getIdPregunta)
-                .collect(Collectors.toList());
+                .toList();
 
         List<Respuesta> respuestasCorrestas = respuestaRepository.encontarRespuestasPorIdPreguntaYEsCorrecta(listaIdsPreguntas, esCorrecta);
 
         for (RespuestasExamen respuesta : listadoRespuestas) {
             if((Objects.equals(respuestasCorrestas.get(indice).getOpcRespuesta(), respuesta.getOpcMarcada()))){
                 calificacionTotal += respuesta.getCalificacion();
+            }else {
+                respuesta.setCalificacion(0);
             }
             RespuestasExamen actualizarObjetoRespuesta = new RespuestasExamen();
             actualizarObjetoRespuesta.setIdEstudiante(respuesta.getIdEstudiante());
@@ -136,18 +153,21 @@ public class ExamenService {
             actualizarObjetoRespuesta.setCalificacion(respuesta.getCalificacion());
             actualizarObjetoRespuesta.setOpcion(respuesta.getOpcion());
             actualizarObjetoRespuesta.setOpcMarcada(respuesta.getOpcMarcada());
-            actualizarObjetoRespuesta.setRespuestaExamen(respuesta.getOpcMarcada());
 
             respuestasAGuardar.add(actualizarObjetoRespuesta);
-
-
             indice ++;
         }
+        String mensaje = "";
+        if(!respuestasAGuardar.isEmpty()){
+            respuestasExamenRepository.saveAll(respuestasAGuardar);
+            realizado = true;
+            asignacionRepository.actualizarCalificacionExamen(calificacionTotal, realizado, idExamen);
 
-        respuestasExamenRepository.saveAll(respuestasAGuardar);
-        asignacionRepository.actualizarCalificacionExamen(calificacionTotal, idExamen);
-        return ResponseEntity.ok("Examen creado exitosamente.");
+            mensaje = "Tu calificación del examen es: " + calificacionTotal + " puntos de 100 disponibles";
+            return ResponseEntity.ok(mensaje);
+        }else {
+            mensaje = "Error al tratar de calificar el examen.";
+            return ResponseEntity.badRequest().body(mensaje);
+        }
     }
-
-
 }
