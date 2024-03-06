@@ -1,8 +1,9 @@
 package com.examenfomyou.controller;
 
-import com.examenfomyou.dto.PreguntaRespuestasDTO;
 import com.examenfomyou.model.Examen;
+import com.examenfomyou.model.RespuestasExamen;
 import com.examenfomyou.service.ExamenService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,13 +25,14 @@ public class ExamenController {
     }
 
     @GetMapping("/realizar-examen/{idEstudiante}")
-    public List<PreguntaRespuestasDTO> realizarExamen(@PathVariable Long idEstudiante){
-        List<PreguntaRespuestasDTO> examen = examenService.realizarExamen(idEstudiante);
-        return examen;
+    public ResponseEntity<String> realizarExamen(@PathVariable Long idEstudiante) throws JsonProcessingException {
+        examenService.realizarExamen(idEstudiante);
+        return ResponseEntity.ok("Examen realizado con exito.");
+    }
+    @PostMapping("/solucionar-examen/{idExamen}")
+    public ResponseEntity<String> solucionarExamen(@RequestBody List<RespuestasExamen> respuestasExamen, @PathVariable Long idExamen){
+        examenService.solucionarExamen(respuestasExamen, idExamen);
+        return ResponseEntity.ok("Examen resuelto y calificado con exito..");
     }
 
-    @PostMapping("/solucionar-examen/{idEstudiante}")
-    public void responderExamen(@PathVariable Long idEstudiante){
-        examenService.responderExamen(idEstudiante);
-    }
 }

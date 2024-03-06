@@ -1,5 +1,6 @@
 package com.examenfomyou.model;
 
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,8 +22,8 @@ public class Asignacion implements Serializable {
     private Long id;
     private Long idEstudiante;
     private Long idExamen;
-    private int nota;
     private boolean realizado;
-
-
+    @Column(name = "json_examenlisto", columnDefinition = "TEXT")
+    private String examenListo;
+    private String calificacion;
 }
